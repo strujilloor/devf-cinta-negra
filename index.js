@@ -1,9 +1,7 @@
 require('dotenv').config();
-const { GraphQLServer} = require('graphql-yoga');
+const { GraphQLServer } = require('graphql-yoga');
 const { importSchema } = require('graphql-import');
 const resolvers = require('./src/resolvers');
-
-
 const mongoose = require('mongoose');
 
 mongoose.connect(process.env.MONGO_URL, {
@@ -24,4 +22,4 @@ const server = new GraphQLServer({
     resolvers
 });
 
-server.start(()=> console.log('Servidor arriba en puerto 4000'))
+server.start(() => console.log('Servidor arriba en puerto 4000'));
