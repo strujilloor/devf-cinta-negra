@@ -1,6 +1,6 @@
 type Query {
     getAuthors: [Author]!
-    getAuthorsDeleted: [Author]!
+    getDeletedAuthors: [Author]!
     getAuthorById(id: ID!): Author!
     getAuthorByEmail(id: ID!): Author!
 }
