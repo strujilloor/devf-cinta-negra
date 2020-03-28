@@ -11,6 +11,6 @@ const AuthorSchema = new Schema({
     gender: {type: String, enum: ['M', 'F', 'O']},
     profile_pic: String,
     is_active: {type: Boolean, default: true},
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('authors', AuthorSchema);
