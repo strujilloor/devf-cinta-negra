@@ -3,12 +3,17 @@ type Query {
     getDeletedAuthors: [Author]!
     getAuthorById(id: ID!): Author!
     getAuthorByEmail(id: ID!): Author!
+    getPosts: [Post]!
+    getPostById(id: ID!): Post!
 }
 
 type Mutation {
     createAuthor(data:AuthorCreateInput!): Author!
     updateAuthor(id: ID!, data:AuthorUpdateInput!): Author!
     deleteAuthor(id: ID!): Author!
+    createPost(idAuthor: ID!, data:PostCreateInput!): Post!
+    updatePost(id: ID!, data: PostUpdateInput!): Post!
+    deletePost(id: ID!): Post!
 }
 
 type Author {
@@ -50,6 +55,22 @@ input AuthorUpdateInput{
     birth_date: String
     gender: GENDERS
     profile_pic: String
+    is_active: Boolean
+}
+
+input PostCreateInput {
+    title: String!
+    content: String!
+    author: String
+    cover: String
+    is_active: Boolean
+}
+
+input PostUpdateInput{
+    title: String
+    content:String
+    author: String
+    cover: String
     is_active: Boolean
 }
 
