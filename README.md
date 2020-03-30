@@ -25,6 +25,17 @@
    1. ``` npm install eslint --global ```
 3. Para inicializar ESLint en nuestro proyecto:
    1. ``` eslint --init ```
+   2. To check syntax, find problems, and enforce code style
+   3. CommonJS (require/exports)
+   4. None of these
+   5. No use typescript
+   6. Node
+   7. Answer questions about your style
+   8. Json
+   9. Spaces
+   10. Single
+   11. Windows
+   12. Do you require semicolons? Yes
 
 ## GraphQL - MongoDB - GraphQL Yoga
 ```
