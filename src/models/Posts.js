@@ -13,12 +13,12 @@ const PostSchema = new Schema({
     },
     author: { // author: 21345652431343123
         type: Schema.Types.ObjectId,
-        ref:'author'
+        ref:'authors'
     },
     cover: String,
     liked_by: {  // liked_by: ['1212311','1212312','1212313']
         type: [Schema.Types.ObjectId],
-        ref:'authors_liked_by'
+        ref:'authors'
     },
     is_active: {
         type: Boolean,

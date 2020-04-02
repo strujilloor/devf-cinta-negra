@@ -13,7 +13,8 @@ const updateAuthor = async (_, { id,  data }) => {
 
 const deleteAuthor = async (_, { id }) => {
     const author = await deleteById( id );
-    return author;
+    if ( !author ) return 'Author not exits';
+    return 'Author deleted';
 };
 
 
