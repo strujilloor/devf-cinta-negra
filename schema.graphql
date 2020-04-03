@@ -1,3 +1,7 @@
+scalar EmailAdd
+scalar URL
+
+
 type Query {
     getAuthors: [Author]!
     getDeletedAuthors: [Author]!
@@ -20,7 +24,7 @@ type Author {
     _id: ID!
     first_name: String!
     last_name: String!
-    email: String!
+    email: EmailAdd!
     birth_date: String!
     posts: [Post]!
     gender: GENDERS

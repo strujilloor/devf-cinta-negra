@@ -4,7 +4,7 @@ const getAllAuthors = () => Authors
     .find( { is_active: true } )
     .populate({
         path: 'posts',
-        model: 'posts',
+        model: 'posts'
     });
 
 const getAllDeletedAuthors = () => Authors.find({is_active: false});
