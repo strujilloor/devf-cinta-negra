@@ -1,23 +1,31 @@
 scalar EmailAdd
 scalar URL
-
+directive @auth on FIELD_DEFINITION | FIELD # @auth es el nombre que le damos a la directiva
+# note: DIRECTIVAS, donde yo la ponga va a pasar antes por un middleware entre la ejecución de la función y la recepción de la información. (pasar por una pequeña capa de autenticación en este caso)
 
 type Query {
     getAuthors: [Author]!
     getDeletedAuthors: [Author]!
     getAuthorById(id: ID!): Author!
     getAuthorByEmail(id: ID!): Author!
+
     getPosts: [Post]!
     getPostById(id: ID!): Post!
+
+    me: Author! @auth
 }
 
 type Mutation {
-    createAuthor(data:AuthorCreateInput!): Author!
-    updateAuthor(id: ID!, data:AuthorUpdateInput!): Author!
-    deleteAuthor(id: ID!): String!
-    createPost(idAuthor: ID!, data:PostCreateInput!): Post!
-    updatePost(id: ID!, data: PostUpdateInput!): Post!
-    deletePost(id: ID!): Post!
+    createAuthor(data:AuthorCreateInput!): Author! # para crear un author no necesita estar autenticado por que es un registro
+    updateAuthor(data:AuthorUpdateInput!): Author! @auth # para actualizar un author necesitas estar autenticado
+    deleteAuthor: String! @auth
+
+    createPost(data:PostCreateInput!): Post! @auth
+    updatePost(id: ID!, data: PostUpdateInput!): Post! @auth
+    likePost(id:ID!):Post!@auth
+    deletePost(id:ID!):String!@auth
+
+    login(email:EmailAdd!, password: String!): Auth! # es una mutation por que esta creando un token, Auth es un objeto que tiene el token y un mensaje
 }
 
 type Author {
@@ -25,11 +33,17 @@ type Author {
     first_name: String!
     last_name: String!
     email: EmailAdd!
+    password: String!
     birth_date: String!
     posts: [Post]!
     gender: GENDERS
     profile_pic: String!
     is_active: Boolean!
+}
+
+type Auth{
+    token: String!
+    message: String!
 }
 
 type Post {
@@ -46,6 +60,7 @@ input AuthorCreateInput{
     first_name: String!
     last_name: String!
     email: String!
+    password: String!
     birth_date: String
     gender: GENDERS
     profile_pic: String
@@ -56,6 +71,7 @@ input AuthorUpdateInput{
     first_name: String
     last_name: String
     email: String
+    password: String
     birth_date: String
     gender: GENDERS
     profile_pic: String
