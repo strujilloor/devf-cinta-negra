@@ -41,4 +41,4 @@ const server = new GraphQLServer({
     }),
 });
 
-server.start( {port}, ( ) => console.log(`Servidor arriba en puerto ${ port }`)) ;
+server.start( { port }, ( ) => console.log(`Servidor arriba en puerto ${ port }`)) ;
