@@ -1,12 +1,12 @@
-const { createOnePost, updateOnePost, deleteOnePost } = require('../../services/PostService');
-const { getOneAuthorById } = require('../../services/AuthorService');
+const { createOnePost, updateOnePost, deleteOnePost, getOnePost } = require('../../services/PostService');
 
-const createPost = async (_, {idAuthor, data}) => {
+const createPost = async (_, {data}, {userAuth}) => { // userAuth viene del context
     const post = await createOnePost(data);
     if(post) {
-        const author = await getOneAuthorById(idAuthor);
-        author.posts.push(post._id);
-        author.save();
+        userAuth.posts.push(post._id);
+        userAuth.save();
+        post.author = userAuth._id;
+        post.save();
     }
     return post;
 };
@@ -16,8 +16,19 @@ const updatePost = async (_, {id, data}) => {
     return post;
 };
 
-const deletePost = async (_, {id}) => {
+const deletePost = async (_, {id}, { userAuth }) => {
     const post = await deleteOnePost(id);
+    if (!post) return 'Post not exist';
+    const index = userAuth.posts.findIndex(p => p._id == id);
+    userAuth.posts.splice(index,1);
+    userAuth.save();
+    return 'Post deleted';
+};
+
+const likePost = async (_, {id}, { userAuth }) => {
+    const post = await getOnePost(id);
+    post.liked_by(userAuth._id);
+    post.save();
     return post;
 };
 
@@ -25,4 +36,5 @@ module.exports = {
     createPost,
     updatePost,
     deletePost,
+    likePost,
 }; 
