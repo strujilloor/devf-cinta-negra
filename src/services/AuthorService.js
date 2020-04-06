@@ -9,9 +9,25 @@ const getAllAuthors = () => Authors
 
 const getAllDeletedAuthors = () => Authors.find({is_active: false});
 
-const getOneAuthorById = ( id ) => Authors.findById({ 
-    _id: id, is_active: true
-});
+const getOneAuthorById = ( id ) => Authors
+    .findById({ 
+        _id: id, 
+        is_active: true
+    })
+    .populate({
+        path: 'posts',
+        model: 'posts'
+    });
+
+const getOneAuthorByEmail = ( email ) => Authors
+    .findOne({ 
+        email, 
+        is_active: true
+    })
+    .populate({
+        path: 'posts',
+        model: 'posts'
+    });
 
 const createOneAuthor = ( data ) => Authors.create( data );
 
@@ -31,6 +47,7 @@ module.exports = {
     getAllAuthors,
     getAllDeletedAuthors,
     getOneAuthorById,
+    getOneAuthorByEmail,
     createOneAuthor,
     updateById,
     deleteById,
