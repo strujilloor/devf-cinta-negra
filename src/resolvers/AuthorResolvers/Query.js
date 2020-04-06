@@ -15,8 +15,14 @@ const getAuthorById = async (_, { id }) => {
     return author; 
 }
 
+const me = async ( _, __, { userAuth }) => {
+    const author = await getOneAuthorById(userAuth._id);
+    return author;
+};
+
 module.exports = {
     getAuthors,
     getDeletedAuthors,
     getAuthorById,
+    me,
 };
