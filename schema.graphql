@@ -22,7 +22,7 @@ type Mutation {
 
     createPost(data:PostCreateInput!): Post! @auth
     updatePost(id: ID!, data: PostUpdateInput!): Post! @auth
-    likePost(id:ID!):Post!@auth
+    likePost(id:ID!):Post! @auth
     deletePost(id:ID!):String!@auth
 
     login(email:EmailAdd!, password: String!): Auth! # es una mutation por que esta creando un token, Auth es un objeto que tiene el token y un mensaje

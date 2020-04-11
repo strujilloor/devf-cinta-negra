@@ -1,6 +1,18 @@
 const { createOnePost, updateOnePost, deleteOnePost, getOnePost } = require('../../services/PostService');
+const storage = require('../../utils/storage');
 
 const createPost = async (_, {data}, {userAuth}) => { // userAuth viene del context
+    // data.cover = 'https://cloudinary.com/sadfasfnan';
+    if(data.cover ) {
+        const { createReadStream } = await data.cover;
+        const stream = createReadStream();
+        const storageInfo = await storage({stream});
+        data = {
+            ...data,
+            cover: storageInfo.url, //url image
+        }
+    }
+
     const post = await createOnePost(data);
     if(post) {
         userAuth.posts.push(post._id);
@@ -12,6 +24,16 @@ const createPost = async (_, {data}, {userAuth}) => { // userAuth viene del cont
 };
 
 const updatePost = async (_, {id, data}) => {
+    if (data.cover) {
+        const { createReadStream } = await data.cover;
+        const stream = createReadStream();
+        const storageInfo = await storage({stream});
+        console.log(storageInfo);
+        data = {
+            ...data,
+            cover: storageInfo.secure_url, //url image
+        };
+    }
     const post = await updateOnePost(id, data);
     return post;
 };

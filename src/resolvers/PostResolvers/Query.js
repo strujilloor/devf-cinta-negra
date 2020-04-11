@@ -2,7 +2,7 @@ const { getAllPosts, getOnePost } = require('../../services/PostService');
 
 const getPosts = async () => {
     const posts = await getAllPosts();
-    console.log(posts);
+    // console.log(posts);
     return posts;
 };
 
