@@ -7,6 +7,13 @@ const getAllAuthors = () => Authors
         model: 'posts'
     });
 
+const getAllAuthorsFilter = (filter) => Authors
+    .find({[filter]: { $exists: true } , is_active: true })
+    .populate({
+        path: 'posts',
+        model: 'posts',
+    });
+
 const getAllDeletedAuthors = () => Authors.find({is_active: false});
 
 const getOneAuthorById = ( id ) => Authors
@@ -45,6 +52,7 @@ const deleteById = (id) => Authors.findByIdAndUpdate(
 
 module.exports = {
     getAllAuthors,
+    getAllAuthorsFilter,
     getAllDeletedAuthors,
     getOneAuthorById,
     getOneAuthorByEmail,

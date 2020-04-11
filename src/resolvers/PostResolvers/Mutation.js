@@ -9,7 +9,7 @@ const createPost = async (_, {data}, {userAuth}) => { // userAuth viene del cont
         const storageInfo = await storage({stream});
         data = {
             ...data,
-            cover: storageInfo.url, //url image
+            cover: storageInfo.secure_url, //url image
         }
     }
 

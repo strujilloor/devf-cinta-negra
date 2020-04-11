@@ -1,15 +1,16 @@
 scalar EmailAdd
 scalar URL
+scalar Upload
 directive @auth on FIELD_DEFINITION | FIELD # @auth es el nombre que le damos a la directiva
 # note: DIRECTIVAS, donde yo la ponga va a pasar antes por un middleware entre la ejecución de la función y la recepción de la información. (pasar por una pequeña capa de autenticación en este caso)
 
 type Query {
-    getAuthors: [Author]!
+    getAuthors(filter: String): [Author]!
     getDeletedAuthors: [Author]!
     getAuthorById(id: ID!): Author!
     getAuthorByEmail(id: ID!): Author!
 
-    getPosts: [Post]!
+    getPosts(filter: String): [Post]!
     getPostById(id: ID!): Post!
 
     me: Author! @auth
@@ -22,8 +23,8 @@ type Mutation {
 
     createPost(data:PostCreateInput!): Post! @auth
     updatePost(id: ID!, data: PostUpdateInput!): Post! @auth
-    likePost(id:ID!):Post! @auth
-    deletePost(id:ID!):String!@auth
+    likePost(id:ID!): Post! @auth
+    deletePost(id:ID!): String! @auth
 
     login(email:EmailAdd!, password: String!): Auth! # es una mutation por que esta creando un token, Auth es un objeto que tiene el token y un mensaje
 }
@@ -63,7 +64,7 @@ input AuthorCreateInput{
     password: String!
     birth_date: String
     gender: GENDERS
-    profile_pic: String
+    profile_pic: Upload
     is_active: Boolean
 }
 
@@ -74,23 +75,21 @@ input AuthorUpdateInput{
     password: String
     birth_date: String
     gender: GENDERS
-    profile_pic: String
+    profile_pic: Upload
     is_active: Boolean
 }
 
 input PostCreateInput {
     title: String!
     content: String!
-    author: String
-    cover: String
+    cover: Upload
     is_active: Boolean
 }
 
 input PostUpdateInput{
     title: String
     content:String
-    author: String
-    cover: String
+    cover: Upload
     is_active: Boolean
 }
 
