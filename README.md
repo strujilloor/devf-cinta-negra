@@ -1,4 +1,4 @@
-# Día 03
+# DOCUMENTACIÓN CINTA NEGRA
 ## MongoDB Atlas
 
 1. Crear una cuenta, puedes iniciar sesión con google
@@ -241,6 +241,63 @@ input AuthorCreateInput{
 
 > Note: vemos que será usado en la mutation
 
+#### 7. Scalars
+
+```
+npm install --save graphql-scalars
+```
+doc: https://github.com/Urigo/graphql-scalars
+
+en este caso vamos a utilizar el scalar EmailAdd para los campos de tipo email, y para la mutation de login (ver el archivo schema.graphql).
+
+archivo schema.graphql :
+```graphql
+scalar EmailAdd
+
+# ...
+
+type Author {
+    _id: ID!
+    first_name: String!
+    last_name: String!
+    
+    email: EmailAdd! # aquí
+
+    password: String!
+    birth_date: String!
+    posts: [Post]!
+    gender: GENDERS
+    profile_pic: String!
+    is_active: Boolean!
+}
+
+```
+
+> Note: solo se implementa en el la identidad general, no en el input o update
+
+Ahora debemos importarlas en nuestros resolvers de la siguiente forma:
+
+En src/resolvers/index.js :
+
+```javascript
+const AuthorResolver = require('./AuthorResolvers');
+const PostsResolver = require('./PostResolvers');
+
+const { EmailAddressResolver } = require('graphql-scalars'); // lo importamos
+
+module.exports = {
+    EmailAdd: EmailAddressResolver, // y lo agregamos
+    Query:{
+        ...AuthorResolver.Query,
+        ...PostsResolver.Query,
+    },
+    Mutation:{
+        ...AuthorResolver.Mutation,
+        ...PostsResolver.Mutation,
+    }
+}
+```
+
 ### Resolvers
 
 src/[resolvers][7]
@@ -262,6 +319,119 @@ module.exports = {
 
 > Como podemos ver este resolver utiliza el servicio para traer y retornar autores.
 
+## Authentication
+
+```
+npm install bcrypt
+npm install jsonwebtoken
+```
+
+documentación bcrypt: https://github.com/kelektiv/node.bcrypt.js
+documentación jwt: https://github.com/auth0/node-jsonwebtoken
+
+### Authenticate Methods
+
+1. authenticate
+2. createToken
+3. verifyToken.
+
+### Create Token
+
+Un token va a contener header, payload y signature (firma).
+
+en el payload podemos decidir que almacenar en él, (sería bueno no almacenar contraseñas!), en este caso almacenará el email y el first_name del usuario.
+
+jwt.sign recibe como parámetros:
+1. el payload
+2. nuestra secret key (definida en .env)
+3. un objeto con las opciones, en este caso el tiempo de expiración
+
+path: src/utils/createToken.js
+
+```javascript
+const jwt = require('jsonwebtoken');
+/*
+header
+payload
+signature
+*/
+
+const createToken = ( { email, first_name } ) => {
+    const payload = {
+        email,
+        first_name,
+    };
+    return jwt.sign(payload, process.env.SECRET_KEY_JWT,{ expiresIn: '1d'});
+};
+
+module.exports = createToken; 
+```
+
+### Verify Token
+
+path: src/utils/verifyToken.js
+
+```javascript
+const jwt = require('jsonwebtoken');
+const { getOneAuthorByEmail } = require('../services/AuthorService');
+
+const verifyToken = async ( req ) => { // recibe la request.
+    try {
+        // obtenemos la authorization de la request
+        const Authorization = req.get('Authorization'); // se puede obtener el valor dentro de un objeto utilizando get.
+        if ( Authorization ) {
+            // formato: JWT sadsdfadsds.sadsdasdad.sasdadfdsfsd
+            const formatedToken = Authorization.replace('JWT ',''); // reemplazamos JWT por una cadena vacia por que eso no lo vamos a necesitar.
+            // nos quedaría así: sadsdfadsds.sadsdasdad.sasdadfdsfsd
+            const payload = jwt.verify( formatedToken, process.env.SECRET_KEY_JWT ); // verify: verifica en el token (si el tiempo acabó (expiró)).
+            if ( !payload ) return req; // si nuestro payload no existe vamos a retornar nuestro request así solito.
+            const userAuth = await getOneAuthorByEmail( payload.email ); // si si, traigame el usuario.
+            if ( !userAuth ) return req;
+            return userAuth; // devuelvame el usuario completo. (quedará guardado en nuestro contexto)
+        } else {
+            return {}; // regresariamos al userAuth del contexto un objeto vacio.
+        }
+    }catch (e) {
+        throw new Error( e.message );
+    }
+};
+
+module.exports = verifyToken; 
+```
+
+### Authenticate
+
+path: src/utils/authenticate.js
+
+```javascript
+const bcrypt = require('bcrypt'); // para desencriptar
+const { getOneAuthorByEmail } = require('../services/AuthorService');
+const createToken = require('./createToken'); // generar el token para devolverselo a quien este haciendo la petición
+
+const authenticate = ( {email, password} ) => {
+    return new Promise((resolve, reject)=>{
+        getOneAuthorByEmail(email).then(userAuth => {
+            if( !userAuth ) reject( new Error('Author not exist') );
+            bcrypt.compare(password, userAuth.password, (err, isValid) => { // compara el password con el valor almacenado encriptado
+                if(err) reject(new Error('Error to compare'));
+                isValid // es valida la contraseña ?
+                    ? resolve(createToken(userAuth)) // creame el token con el usuario a authenticar
+                    : reject(new Error('Incorrect Password'));
+            });
+        }); 
+    });
+};
+
+module.exports = authenticate;
+```
+
+### Agregar Secret Key JWT
+
+path: .env
+```
+NOMBRE_LA_VARIABLE=VALOR
+SECRET_KEY_JWT=heladodevainilla 
+```
 
 
 [1]: ./index.js
