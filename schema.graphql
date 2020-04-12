@@ -35,10 +35,10 @@ type Author {
     last_name: String!
     email: EmailAdd!
     password: String!
-    birth_date: String!
+    birth_date: String
     posts: [Post]!
     gender: GENDERS
-    profile_pic: String!
+    profile_pic: String
     is_active: Boolean!
 }
 
