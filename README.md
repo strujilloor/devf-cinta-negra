@@ -319,6 +319,12 @@ module.exports = {
 
 > Como podemos ver este resolver utiliza el servicio para traer y retornar autores.
 
+<br>
+<br>
+
+---
+
+
 ## Authentication
 
 ```
@@ -432,6 +438,8 @@ path: .env
 NOMBRE_LA_VARIABLE=VALOR
 SECRET_KEY_JWT=heladodevainilla 
 ```
+
+
 
 
 [1]: ./index.js
