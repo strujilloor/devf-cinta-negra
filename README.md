@@ -620,6 +620,10 @@ module.exports = mongoose.model('authors', AuthorSchema);
 
 ### Agregar la autenticación a los Resolvers
 
+En nuestras mutations, las operaciones como update o delete que pedian como parámetro el id, ya no será necesario, por que por la authentication vendría desde el context el id del usuario autenticado.
+
+así que los eliminamos y agregamos el userAuth:
+
 path: src/resolvers/AuthorResolvers/Mutation.js
 
 ```javascript
@@ -633,7 +637,7 @@ const createAuthor = async (_, { data }) => {
 };
 
 // userAuth vienen en el context
-const updateAuthor = async (_, { data }, { userAuth }) => {
+const updateAuthor = async (_, { data }, { userAuth }) => { // eliminamos id, y agregamos { userAuth }
     const author = await updateById(userAuth._id, data);
     return author;
 };
@@ -668,10 +672,6 @@ path: src/resolvers/AuthorResolvers/Query.js
 
 ```javascript
 // ...
-const me = async ( _, __, { userAuth }) => {
-    const author = await getOneAuthorById(userAuth._id);
-    return author;
-};
 
 const me = async ( _, __, { userAuth }) => {
     const author = await getOneAuthorById(userAuth._id);
@@ -689,6 +689,28 @@ module.exports = {
 también modificamos las mutations que requiran autenticación en Post
 path: src/resolvers/PostResolvers/Mutation.js 
 link: https://github.com/strujilloor/devf-cinta-negra/commit/c7361a95e5ad3f1cffaf4758d513b799b88ecabe
+
+Por ultimo en nuestro Schema, las operaciones eliminamos también los IDs:
+
+path: schema.graphql
+link: https://github.com/strujilloor/devf-cinta-negra/blob/feature/authentication/schema.graphql
+
+```graphql
+# ...
+type Mutation {
+    createAuthor(data:AuthorCreateInput!): Author! 
+    updateAuthor(data:AuthorUpdateInput!): Author! @auth # eliminamos id, y solo dejamos data
+    deleteAuthor: String! @auth # eliminamos el id y borramos los parentesis
+
+    createPost(data:PostCreateInput!): Post! @auth
+    updatePost(id: ID!, data: PostUpdateInput!): Post! @auth
+    likePost(id:ID!): Post! @auth
+    deletePost(id:ID!): String!@auth
+
+    login(email:EmailAdd!, password: String!): Auth! 
+}
+# ...
+```
 
 ### Agregar get by email a los servicios
 
