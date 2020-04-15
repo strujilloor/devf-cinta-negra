@@ -729,6 +729,295 @@ const getOneAuthorByEmail = ( email ) => Authors
 ```
 
 
+---
+
+
+## Storage
+
+> Vamos a utilizar Cloudinary :D
+
+### Cloudinary
+
+1. https://cloudinary.com/
+2. SIGN UP FOR FREE
+3. developer, React
+4. Note: lo que lo que vamos a importar está en el dashboard - Account details
+
+### Cloudinary API
+
+```
+npm install cloudinary
+```
+
+documentación cloudinary: https://cloudinary.com/documentation/node_integration#installation_and_setup
+
+### Insomnia
+
+link: https://insomnia.rest/
+
+Instalar Insomnia, para poder enviar archivos en nuestras pruebas.
+
+### Storage
+
+path: src/utils/storage.js
+
+```javascript
+const cloudinary = require('cloudinary'); // importamos cloudinary
+
+const storage = ( {stream} ) => {
+    cloudinary.config({ // configuración
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME, // estos datos los obtenemos del dashboard de cloudinary, en Account Details
+        api_key: process.env.CLOUDINARY_API_KEY, 
+        api_secret: process.env.CLOUDINARY_API_SECRET 
+    });
+
+    return new Promise((resolve, reject) => { // storage retorna una promesa
+        const buffer = cloudinary.v2.uploader.upload_stream((err, result) => { //subir el archivo
+            if(err) reject(err);
+            resolve(result); // obj que devuelve cloudinary con información
+        });
+        stream.pipe(buffer); 
+    });
+};
+
+module.exports = storage; 
+```
+
+### Variables de entorno para la configuración de cloudinary
+
+path: .env
+```
+NOMBRE_LA_VARIABLE=VALOR
+CLOUDINARY_CLOUD_NAME=dzhj8ymvz
+CLOUDINARY_API_KEY=847186254584918
+CLOUDINARY_API_SECRET=6N-XNSySVjIEEMaQAbFPl4OLL8M
+```
+
+### Utilizar nuestro Storage para almacenar las imagenes
+
+En nuestros resolvers donde vayamos a almacenar imagenes:
+
+path: src/resolvers/PostResolvers/Mutation.js
+
+```javascript
+const { createOnePost, updateOnePost, deleteOnePost, getOnePost } = require('../../services/PostService');
+const storage = require('../../utils/storage'); // importamos nuestro storage
+
+const createPost = async (_, {data}, {userAuth}) => {
+    // data: un multipart form data 
+    if( data.cover ) { // cover es donde viene el archivo (file)
+        console.log(data.cover, typeof data.cover);
+        const { createReadStream } = await data.cover; // espera a cargar el archivo
+        const stream = createReadStream(); // createReadStream nos permite leer el flujo de datos
+        const storageInfo = await storage({stream}); // almacenamos lo que nos trae el storage
+        data = {
+            ...data,
+            cover: storageInfo.url, //url image
+        }
+    }
+
+    const post = await createOnePost(data);
+    if(post) {
+        userAuth.posts.push(post._id);
+        userAuth.save();
+        post.author = userAuth._id;
+        post.save();
+    }
+    return post;
+};
+
+const updatePost = async (_, {id, data}) => {
+    if (data.cover) {
+        const { createReadStream } = await data.cover;
+        const stream = createReadStream();
+        const storageInfo = await storage({stream});
+        console.log(storageInfo);
+        data = {
+            ...data,
+            cover: storageInfo.secure_url, //url image
+        };
+    }
+    const post = await updateOnePost(id, data);
+    return post;
+};
+
+const deletePost = async (_, {id}, { userAuth }) => {
+    const post = await deleteOnePost(id);
+    if (!post) return 'Post not exist';
+    const index = userAuth.posts.findIndex(p => p._id == id);
+    userAuth.posts.splice(index,1);
+    userAuth.save();
+    return 'Post deleted';
+};
+
+const likePost = async (_, {id}, { userAuth }) => {
+    const post = await getOnePost(id);
+    post.liked_by(userAuth._id);
+    post.save();
+    return post;
+};
+
+module.exports = {
+    createPost,
+    updatePost,
+    deletePost,
+    likePost,
+};
+```
+
+hacemos lo mismo para Authors: link: ver mutations de authors
+
+### Modificar nuestro GraphQL con el Scalar Upload
+
+path: schema.graphql
+
+```graphql
+scalar Upload
+
+# ...
+
+type Author {
+    _id: ID!
+    first_name: String!
+    last_name: String!
+    email: EmailAdd!
+    password: String!
+    birth_date: String!
+    posts: [Post]!
+    gender: GENDERS
+    profile_pic: String! # note que se guarda como string
+    is_active: Boolean!
+}
+type Post {
+    _id: ID!
+    title: String!
+    content: String!
+    author: Author!
+    cover: String! # igual
+    liked_by: [Author]!
+    is_active: Boolean
+}
+
+input AuthorCreateInput{
+    first_name: String!
+    last_name: String!
+    email: String!
+    password: String!
+    birth_date: String
+    gender: GENDERS
+    profile_pic: Upload # aquí
+    is_active: Boolean
+}
+
+input AuthorUpdateInput{
+    first_name: String
+    last_name: String
+    email: String
+    password: String
+    birth_date: String
+    gender: GENDERS
+    profile_pic: Upload # aquí
+    is_active: Boolean
+}
+
+input PostCreateInput {
+    title: String!
+    content: String!
+    author: String
+    cover: Upload # aquí
+    is_active: Boolean
+}
+
+input PostUpdateInput{
+    title: String
+    content:String
+    author: String
+    cover: Upload # aquí
+    is_active: Boolean
+}
+# ...
+```
+### Usar Insomnia
+
+1. la REQUEST debe ser POST
+2. En multipart
+   1. operations: text multi-line
+
+```
+{
+  "query":"mutation createPost($data:PostCreateInput!){createPost(data:$data){_id title content}}",
+  "variables":{
+    "data":{
+      "title":"Mi post con insomnia.",
+      "content": "Qué emoción prueba 2",
+      "cover": null
+    }
+  }
+}
+```
+
+   2. map: 
+
+```
+{"0":["variables.data.cover"]}
+```
+
+   3. 0 : cargamos la imagen
+1. si necesita autorización: en HEADER
+   1. authorization
+   2. y pegamos nuestro jwt
+
+
+## Deploy con Heroku
+
+nuestro package.json debe tener lo siguiente:
+```json
+{
+  "name": "sugar",
+  "version": "1.0.0",
+  "description": "App Sugar Baby",
+  "main": "index.js",
+  "engines": { // engines con la versión que tienes de node -v
+    "node": "10.x"
+  },
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "set NODE_ENV=production && node index.js", // y el script de start
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/strujilloor/Sugar.git"
+  },
+  "keywords": [
+    "sugar",  
+    "app",
+    "sugar",
+    "baby"
+  ],
+  "author": "stiven",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/strujilloor/Sugar/issues"
+  },
+  "homepage": "https://github.com/strujilloor/Sugar#readme",
+  "dependencies": {
+    "bcrypt": "^4.0.1",
+    "cloudinary": "^1.21.0",
+    "dotenv": "^8.2.0",
+    "graphql-scalars": "^1.0.9",
+    "graphql-yoga": "^1.18.3",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.9.6",
+    "nodemon": "^2.0.2"
+  }
+}
+```
+
+En heroku, Settings, Config Vars, vamos a agregar las variables que tenemos en nuestro .env
+
+En heroku, en deploy, seleccionamos nuestra branch principal de github y DEPLOY BRANCH
+
 
 
 
